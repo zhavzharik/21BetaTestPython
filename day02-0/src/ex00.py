@@ -21,7 +21,7 @@ class Key:
 if __name__ == "__main__":
     key = Key()
     key[404] = 3
-    key['passphrase'] = 'zax2rulez'
+    key["passphrase"] = "zax2rulez"
     # if len(key) == 1337:
     #     print("True len(key) = 1337")
     # if key[404] == 3:

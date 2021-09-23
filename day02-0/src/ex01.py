@@ -4,10 +4,11 @@ from collections import Counter
 class Game(object):
     def __init__(self, matches=10):
         self.matches = matches
+        self.rounds = 10
         self.registry = Counter()
-        self.player1 = {}
-        self.player2 = {}
+        self.player = {}
         self.players = []
+        self.partners = []
 
     # переписать
     def __str__(self):
@@ -16,40 +17,52 @@ class Game(object):
 
     def gen_list_players(self):
         for name in [Cheater, Cooperative, Copycat, Grudger, Detective]:
-            self.player1 = name()
-            self.players.append(self.player1)
-            # self.player2 = self.player1
+            self.player = name()
+            self.players.append(self.player)
 
     def update_registry(self, player1, player2):
-        if player1 == player2:
-            self.registry[player1.name] += 1
-            self.registry[player2.name] += 1
-        elif player1 > player2:
-            self.registry[player1.name] += 1
+        self.registry[player1.name] += player1.candy
+        self.registry[player2.name] += player2.candy
 
     def play(self, player1, player2):
         # simulate number of matches equal to self.matches
+        print(f'Играет {player1.name} и {player2.name}')
         while self.matches > 0:
             player1.update_candy(player2)
             player1.record_behave()
             player2.record_behave()
             player1.update_behave(player2)
             player2.update_behave(player1)
-            self.update_registry(player1, player2)
             self.matches -= 1
+        self.update_registry(player1, player2)
+        print(f'Registry {self.registry}')
+        print(f'{player1.candy} конфет у {player1.name} и {player2.candy} конфет у {player2.name}\n')
+        player1.update_state()
+        player2.update_state()
+        self.update_matches()
 
     def update_matches(self):
         self.matches = 10
 
     def top3(self):
         # return top three (print top three winners after the whole game)
-        return self.registry.most_common(self, 3)
+        return f'{self.registry.most_common(3)}'
 
-    # def all_game(self):
+    def all_game(self):
         # simulate game 10 matches (one call of play())
         # between every pair of two players with different behavior
         # types (total 10 rounds by 10 matches each, no matches between two
         # copies of the same behavior)
+        self.gen_list_players()
+        while self.rounds > 0:
+            for player1 in self.players:
+                self.partners.append(player1.name)
+                for player2 in self.players:
+                    if player1.name != player2.name and player2.name not in self.partners:
+                        self.play(player1, player2)
+            print(f'Registry after {self.rounds} rounds {self.registry}')
+            self.rounds -= 1
+            self.partners = []
 
 
 class Player:
@@ -62,22 +75,14 @@ class Player:
     def __str__(self):
         return f'{self.name}'
 
-    def __gt__(self, other):
-        return self.candy > other.candy
-
-    def __eq__(self, other):
-        return self.candy == other.candy
+    # def __gt__(self, other):  # not need ?
+    #     return self.candy > other.candy
+    #
+    # def __eq__(self, other):  # not need ?
+    #     return self.candy == other.candy
 
     def record_behave(self):
         self.prev = self.behave
-
-    def update_behave(self, other):
-        # self.record_behave()
-        # cooperate
-        # cheat
-        if other.prev == 0:
-            self.behave = 0
-            # self.prev = 0
 
     def update_candy(self, other):
         if self.behave == other.behave and self.behave == 1:
@@ -98,6 +103,11 @@ class Cheater(Player):
         self.prev = 0
         self.behave = 0  # 0-cheat (always)
 
+    def update_state(self):
+        self.prev = 0
+        self.behave = 0
+        self.candy = 0
+
     def update_behave(self, other):
         # always cheats
         if other.prev == 0:
@@ -112,6 +122,11 @@ class Cooperative(Player):
         self.name = 'cooperative'
         self.prev = 1
         self.behave = 1  # 1-cooperate (always)
+
+    def update_state(self):
+        self.prev = 1
+        self.behave = 1
+        self.candy = 0
 
     def update_behave(self, other):
         # always cooperates
@@ -128,6 +143,11 @@ class Copycat(Player):
         self.prev = 1  # 1-cooperate (starts with cooperating)
         self.behave = 1  # 1-cooperate (starts with cooperating)
 
+    def update_state(self):
+        self.prev = 1
+        self.behave = 1
+        self.candy = 0
+
     def update_behave(self, other):
         # starts with cooperating, but then just repeats whatever the other guy is doing
         if other.prev == 0:
@@ -142,6 +162,12 @@ class Grudger(Player):
         self.name = 'grudger'
         self.prev = 1
         self.behave = 1  # 1-cooperate (starts with cooperating)
+        self.flag = 1
+
+    def update_state(self):
+        self.prev = 1
+        self.behave = 1
+        self.candy = 0
         self.flag = 1
 
     def update_behave(self, other):
@@ -163,6 +189,13 @@ class Detective(Player):
         self.behave = 1  # 1-cooperate (First four times goes with [Cooperate, Cheat, Cooperate, Cooperate])
         self.step = 0  # counter of player's steps
         self.switch = 1  # 2 - switches into a Copycat, 0 - switches into Cheater
+
+    def update_state(self):
+        self.prev = 1
+        self.behave = 1
+        self.candy = 0
+        self.step = 0
+        self.switch = 1
 
     def record_behave(self):
         self.prev = self.behave
@@ -193,5 +226,6 @@ class Detective(Player):
 
 if __name__ == "__main__":
     game = Game()
-    game.gen_list_players()
-    print(game)
+    game.all_game()
+    result = game.top3()
+    print(result)
