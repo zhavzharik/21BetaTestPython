@@ -4,16 +4,15 @@ from collections import Counter
 class Game(object):
     def __init__(self, matches=10):
         self.matches = matches
-        self.rounds = 10
+        self.rounds = 1  # 10?
         self.registry = Counter()
         self.player = {}
         self.players = []
         self.partners = []
 
-    # переписать
+    # print result
     def __str__(self):
-        for player in self.players:
-            print(player)
+        return f'{self.registry.most_common(5)}'
 
     def gen_list_players(self):
         for name in [Cheater, Cooperative, Copycat, Grudger, Detective]:
@@ -26,7 +25,6 @@ class Game(object):
 
     def play(self, player1, player2):
         # simulate number of matches equal to self.matches
-        print(f'Играет {player1.name} и {player2.name}')
         while self.matches > 0:
             player1.update_candy(player2)
             player1.record_behave()
@@ -35,8 +33,6 @@ class Game(object):
             player2.update_behave(player1)
             self.matches -= 1
         self.update_registry(player1, player2)
-        print(f'Registry {self.registry}')
-        print(f'{player1.candy} конфет у {player1.name} и {player2.candy} конфет у {player2.name}\n')
         player1.update_state()
         player2.update_state()
         self.update_matches()
@@ -46,12 +42,13 @@ class Game(object):
 
     def top3(self):
         # return top three (print top three winners after the whole game)
-        return f'{self.registry.most_common(3)}'
+        for key, value in self.registry.most_common(3):
+            print(key, value)
 
     def all_game(self):
         # simulate game 10 matches (one call of play())
-        # between every pair of two players with different behavior
-        # types (total 10 rounds by 10 matches each, no matches between two
+        # between every pair of two players with different behavior types
+        # (total 10 rounds by 10 matches each, no matches between two
         # copies of the same behavior)
         self.gen_list_players()
         while self.rounds > 0:
@@ -60,7 +57,6 @@ class Game(object):
                 for player2 in self.players:
                     if player1.name != player2.name and player2.name not in self.partners:
                         self.play(player1, player2)
-            print(f'Registry after {self.rounds} rounds {self.registry}')
             self.rounds -= 1
             self.partners = []
 
@@ -74,12 +70,6 @@ class Player:
 
     def __str__(self):
         return f'{self.name}'
-
-    # def __gt__(self, other):  # not need ?
-    #     return self.candy > other.candy
-    #
-    # def __eq__(self, other):  # not need ?
-    #     return self.candy == other.candy
 
     def record_behave(self):
         self.prev = self.behave
@@ -175,9 +165,9 @@ class Grudger(Player):
         if other.prev == 0:
             self.behave = 0
             self.flag = 0
-        if other.prev == 1 and self.flag == 1:
+        elif other.prev == 1 and self.flag == 1:
             self.behave = 1
-        else:
+        elif other.prev == 1 and self.flag == 0:
             self.behave = 0
 
 
@@ -210,7 +200,6 @@ class Detective(Player):
 
     def update_behave(self, other):
         # first four times goes with [Cooperate, Cheat, Cooperate, Cooperate]
-        self.record_behave()
         if self.step == 1:  # after first step (second step)
             self.behave = 0
             self.update_switch(other)
@@ -227,5 +216,6 @@ class Detective(Player):
 if __name__ == "__main__":
     game = Game()
     game.all_game()
-    result = game.top3()
-    print(result)
+    game.top3()
+    # print("Результаты игры:")
+    # print(game)
