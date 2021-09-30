@@ -4,7 +4,6 @@ from collections import Counter
 class Game(object):
     def __init__(self, matches=10):
         self.matches = matches
-        self.rounds = 1  # 10?
         self.registry = Counter()
         self.player = {}
         self.players = []
@@ -48,17 +47,12 @@ class Game(object):
     def all_game(self):
         # simulate game 10 matches (one call of play())
         # between every pair of two players with different behavior types
-        # (total 10 rounds by 10 matches each, no matches between two
-        # copies of the same behavior)
         self.gen_list_players()
-        while self.rounds > 0:
-            for player1 in self.players:
-                self.partners.append(player1.name)
-                for player2 in self.players:
-                    if player1.name != player2.name and player2.name not in self.partners:
-                        self.play(player1, player2)
-            self.rounds -= 1
-            self.partners = []
+        for player1 in self.players:
+            self.partners.append(player1.name)
+            for player2 in self.players:
+                if player1.name != player2.name and player2.name not in self.partners:
+                    self.play(player1, player2)
 
 
 class Player:
@@ -217,5 +211,5 @@ if __name__ == "__main__":
     game = Game()
     game.all_game()
     game.top3()
-    # print("Результаты игры:")
+    # print("Результат игры:")
     # print(game)
