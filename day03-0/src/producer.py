@@ -1,37 +1,38 @@
 # import os
+import random
 import json
 import redis
 import logging
-from flask import Flask, request
 from rq import Queue
 import time
 
-# this_path = os.getcwd()
-# full_path_file = os.path.join(os.path.dirname(this_path), 'message.json')
-#
-data = {"metadata": {"from": 1023461745, "to": 5738456434}, "amount": 10000}
-json_dump = json.dumps(data, indent=4)
-# print(json_dump)
-
-# with open(full_path_file, "w") as file:
-#     file.write(json_dump)
-
-# app = Flask(__name__)
-
-r = redis.Redis(host='localhost', port=6379, db=0)
-
-# p = r.pubsub()
-# p.subscribe('producer')
-# answer = p.get_message()
-
-r.publish('producer', str(data))
-time.sleep(10)
-r.close()
 
 # q = Queue(connection=r)
+
+def data_publish():
+    r = redis.Redis(host='localhost', port=6379, db=0)
+    keyslist = ['from', 'to']
+    accounts = [4815162342, 3133780085, 5625162372, 7833780089]
+    for i in range(10):
+        valuelist = random.sample(accounts, k=2)
+        metadata = dict(zip(keyslist, valuelist))
+        message = dict(metadata=metadata, amount=random.randint(-10000, 10000))
+        S = json.dumps(message)
+        print(S)
+        r.publish('producer', S)
+        time.sleep(0.01)
+    r.close()
+
 
 # logging.debug('This is a debug message')
 # logging.info('This is an info message')
 # logging.warning('This is a warning message')
 # logging.error('This is an error message')
 # logging.critical('This is a critical message')
+
+
+if __name__ == "__main__":
+    data_publish()
+
+
+
