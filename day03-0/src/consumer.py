@@ -1,13 +1,12 @@
-# import os
 import json
 import sys
 import redis
 import logging
-from rq import Queue
 import time
-
+# from rq import Queue
 
 bad_guys = []
+logger = logging.getLogger('example_logger')
 
 
 def read_bad_guys():
@@ -22,7 +21,8 @@ def read_bad_guys():
     #         break
     if sys.argv[1] == '-e':
         for guy in sys.argv[2].split(','):
-            bad_guys.append(int(guy))
+            if len(guy) == 10:
+                bad_guys.append(int(guy))
     return bad_guys
 
 
@@ -47,19 +47,20 @@ def read_queue(accounts):
             metadata = dict(zip(keyslist, valuelist))
             message = dict(metadata=metadata, amount=amount)
             message = json.dumps(message)
-            print(message)
+            logger.warning(message)
         else:
-            print(message)
+            message = json.dumps(message)
+            logger.warning(message)
         flag += 1
         time.sleep(0.001)
-        if flag == 10:
+        if flag == 20:
             p.close()
 
 
 if __name__ == "__main__":
     bad_guys = read_bad_guys()
-    print(f'bad guys: {bad_guys}')
+    logger.warning(f'bad guys: {bad_guys}')
     read_queue(bad_guys)
 
 
-# python consumer.py -e 4815162342,3133780085
+# python3 consumer.py -e 4815162342,3133780085
